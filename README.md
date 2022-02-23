@@ -1,3 +1,6 @@
+[![rn-gauge](https://github.com/Winzana/rn-gauge/actions/workflows/ci.yml/badge.svg)](https://github.com/Winzana/rn-gauge/actions/workflows/ci.yml)
+
+
 # rn-gauge
 
 Providing customizable gauge component.
