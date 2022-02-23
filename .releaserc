@@ -1,0 +1,15 @@
+{
+  "branches": ["main", "next"],
+  "plugins": [
+    "@semantic-release/commit-analyzer",
+    "@semantic-release/release-notes-generator",
+    "@semantic-release/npm",
+    ["@semantic-release/github", {
+      "assets": [
+        {"path": "lib/index.js", "label": "Index"},
+        {"path": "lib/transform.origin.js", "label": "Transform Origin"},
+        {"path": "lib/utils.js", "label": "Utils"}
+      ]
+    }]
+  ]
+}
