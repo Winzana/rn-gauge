@@ -9,8 +9,12 @@
     "start": "react-native start"
   },
   "dependencies": {
+    "@miblanchard/react-native-slider": "^2.1.0",
+    "lodash.debounce": "^4.0.8",
     "react": "16.13.1",
-    "react-native": "0.63.4"
+    "react-native": "0.63.4",
+    "react-native-svg": "^12.3.0",
+    "react-native-svg-path-gradient": "^0.4.0"
   },
   "devDependencies": {
     "@babel/core": "^7.12.10",
