@@ -1,188 +1,287 @@
 import * as React from 'react';
-import { StyleSheet, View } from 'react-native';
-import { Svg, Circle, FontProps, Rect } from 'react-native-svg';
-import GradientPath from 'react-native-svg-path-gradient';
-import { Step } from './step';
+import {
+  Animated,
+  Easing,
+  StyleProp,
+  StyleSheet,
+  View,
+  ViewStyle,
+} from 'react-native';
+import { degrees_to_radians, generateEllipsePath } from './utils';
+import {
+  Canvas,
+  Path as SkiaPath,
+  SweepGradient,
+  vec,
+  useValue,
+  runSpring,
+  Shadow,
+  AnimatedProps,
+  ShadowProps,
+} from '@shopify/react-native-skia';
+import type { SpringConfig } from '@shopify/react-native-skia/lib/typescript/src/values/animation/types';
+import { transformOriginWorklet } from './transform.origin';
 
-const SEGMENT_SIZE = 0.995;
-const DELIMITER_OFFSET = 5;
-const REVERSE_ROTATION = -90;
+type GetAxisValue = (offset: number, radius?: number) => number;
 
-interface IProps {
+type GetNeedleStyle = (
+  width: number,
+  height: number
+) => {
+  position: string;
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+  backgroundColor: string;
+  transform: any[];
+};
+
+export interface IProps {
+  /**
+   * The external stroke width of the gauge
+   */
   strokeWidth?: number;
+  /**
+   * Gauge thickness
+   */
+  thickness?: number;
+  /**
+   * Colors filling the gauge progress
+   */
+  colors: string[];
+  /**
+   * Steps as string array to display steps on the gauge
+   */
+  steps?: number[];
+  /**
+   * Color to display the empty part of the gauge
+   */
   emptyColor: string;
-  fillColor: string;
-  testID: string;
-  initialRotation: number;
+  /**
+   * Render step function
+   */
+  renderStep?: (props: {
+    // Returns the x position of the step, by default offset can be 0
+    getX: GetAxisValue;
+    // Returns the y position of the step, by default offset can be 0
+    getY: GetAxisValue;
+    // Returns the step value
+    step: number;
+    // Return the step index
+    index: number;
+    // Return gauge radius, can be useful to do some calculations
+    radius: number;
+    // Return the angle of the step in degrees
+    angle: number;
+  }) => JSX.Element;
+  /**
+   * The progress value of the gauge.
+   */
   fillProgress: number;
-  steps?: {
-    segmentSize?: number;
-    segments: {
-      percent: number;
-      label: string;
-      labelColor?: string;
-      segmentColor?: string;
-    }[];
-  };
-  center: React.ReactNode;
+  /**
+   * Gauge's sweep angle, default is 250 ( how wide is the gauge )
+   */
+  sweepAngle: number;
+  /**
+   * Render prop for needle component, default is null
+   */
+  renderNeedle?: (params: {
+    getNeedleStyle: GetNeedleStyle;
+  }) => React.ReactNode;
+  /**
+   * Method to render the label center of the gauge
+   */
+  renderLabel: () => React.ReactNode;
+  /**
+   * Size given to the component
+   */
   size: number;
-  labelStyle: FontProps;
+  /**
+   * Custom Canvas style
+   */
+  canvasStyle?: StyleProp<ViewStyle>;
+  /**
+   * Shadow props if wanted, provide shadow effect
+   */
+  shadowProps?: AnimatedProps<ShadowProps>;
+  /**
+   * Spring config for fill progress animation
+   */
+  springConfig?: SpringConfig;
 }
-export const Gauge: React.FC<IProps> = (props) => {
-  const {
-    strokeWidth = 50,
-    emptyColor,
-    fillColor,
-    fillProgress,
-    testID,
-    initialRotation = REVERSE_ROTATION,
-    center,
-    size,
-    steps,
-    labelStyle,
-  } = props;
 
-  const SIZE_VIEWPORT = size + 100;
-  const radius = (size - strokeWidth) / 2;
-  const circumference = radius * 2 * Math.PI;
+const ANGLE_OFFSET = 90;
 
-  const calculatedAngle = (percent: number) => {
-    return (360 * percent) / 100;
-  };
+export const Gauge: React.FC<IProps> = ({
+  canvasStyle,
+  shadowProps,
+  colors,
+  thickness = 50,
+  sweepAngle,
+  emptyColor,
+  fillProgress,
+  steps,
+  renderStep,
+  strokeWidth,
+  renderNeedle,
+  renderLabel,
+  size,
+  springConfig,
+}) => {
+  const animatedGaugeFillValue = useValue(0);
 
-  const cx = SIZE_VIEWPORT / 2;
+  const animatedArrowValue = React.useRef(new Animated.Value(0));
 
-  const cy = SIZE_VIEWPORT / 2;
+  const startAngle = -ANGLE_OFFSET - sweepAngle / 2;
 
-  const segmentsUnderValueExists = React.useMemo(() => {
-    console.warn({ steps });
-    if (steps) {
-      return (
-        steps &&
-        steps.segments.reduce(
-          (acc, seg) => acc && seg.percent < fillProgress,
-          true
-        )
-      );
-    }
-    return false;
-  }, [steps, fillProgress]);
+  React.useEffect(() => {
+    Animated.timing(animatedArrowValue.current, {
+      toValue: parseInt(`${fillProgress}`, 10) / 100,
+      duration: 250,
+      easing: Easing.inOut(Easing.ease),
+      useNativeDriver: false,
+    }).start();
+    runSpring(
+      animatedGaugeFillValue,
+      { to: fillProgress / 100 },
+      springConfig ? springConfig : ({} as any)
+    );
+  }, [fillProgress, animatedGaugeFillValue, springConfig]);
 
-  console.warn(segmentsUnderValueExists);
+  // Circle center x
+  const cx = size / 2;
+
+  // Circle center y
+  const cy = size / 2;
+
+  // Circle size without stroke
+  const circleSize = size / 2 - (strokeWidth || 2);
+
+  const getNeedleStyle = (width: number, height: number) => ({
+    position: 'absolute',
+    left: cx - width / 2,
+    top: cy - height,
+    width,
+    height,
+    backgroundColor: 'transparent',
+    transform: transformOriginWorklet(
+      { x: cx + width / 2, y: cy },
+      { x: cx + width / 2, y: cy - height / 2 },
+      [
+        {
+          rotateZ: animatedArrowValue.current.interpolate({
+            inputRange: [0, 1],
+            outputRange: [`-${sweepAngle / 2}deg`, `${sweepAngle / 2}deg`],
+          }),
+        },
+      ]
+    ),
+  });
+
   return (
-    <View
-      testID={testID}
-      style={{ justifyContent: 'center', alignItems: 'center' }}
-    >
-      <Svg
-        width={SIZE_VIEWPORT}
-        height={SIZE_VIEWPORT}
-        rotation={initialRotation}
-        style={{ transform: [{ rotate: `${initialRotation}deg` }] }}
-        testID={`${testID}-svg`}
+    <View style={styles.centered}>
+      <Canvas
+        // eslint-disable-next-line react-native/no-inline-styles
+        style={[
+          {
+            width: size,
+            height: size,
+          },
+          canvasStyle,
+        ]}
       >
-        <Circle
-          stroke={emptyColor}
-          fill="none"
-          cx={cx}
-          cy={cy}
-          r={radius}
-          {...{ strokeWidth }}
+        <SkiaPath
+          style="stroke"
+          color="cyan"
+          path={generateEllipsePath(
+            [cx, cy],
+            [circleSize - thickness / 2, circleSize - thickness / 2],
+            [startAngle, sweepAngle],
+            0
+          )}
+          {...{ strokeWidth: thickness + (strokeWidth || 0) }}
         />
-        {!segmentsUnderValueExists && (
-          <>
-            {fillProgress > 0 && (
-              <Rect
-                x={SIZE_VIEWPORT / 2 - DELIMITER_OFFSET}
-                y={SIZE_VIEWPORT / 2 + radius - strokeWidth / 2}
-                rx={5}
-                origin={[SIZE_VIEWPORT / 2, SIZE_VIEWPORT / 2]}
-                width={10}
-                height={strokeWidth}
-                rotation={REVERSE_ROTATION}
-                fill={fillColor}
-              />
-            )}
-            <Circle
-              stroke={fillColor}
-              cx={cx}
-              cy={cy}
-              r={radius}
-              strokeDasharray={`${circumference} ${circumference}`}
-              {...{ strokeWidth }}
-            />
-            {fillProgress > 0 && (
-              <Rect
-                x={SIZE_VIEWPORT / 2}
-                y={SIZE_VIEWPORT / 2 + radius - strokeWidth / 2}
-                rx={4}
-                origin={[SIZE_VIEWPORT / 2, SIZE_VIEWPORT / 2]}
-                width={10}
-                height={strokeWidth}
-                rotation={initialRotation + calculatedAngle(fillProgress)}
-                fill={fillColor}
-              />
-            )}
-          </>
-        )}
-        {segmentsUnderValueExists && (
-          <>
-            <GradientPath
-              d={`M ${cx + 100} ${cy} a ${radius} ${radius} 0 1 0 ${
-                radius * -2
-              } 0 a ${radius} ${radius} 0 1 0 ${radius * 2} 0`}
-              colors={[emptyColor, fillColor, fillColor]}
-              precision={1}
-              {...{ strokeWidth }}
-            />
-            <Rect
-              x={SIZE_VIEWPORT / 2 - DELIMITER_OFFSET}
-              y={SIZE_VIEWPORT / 2 + radius - strokeWidth / 2}
-              rx={5}
-              origin={[SIZE_VIEWPORT / 2, SIZE_VIEWPORT / 2]}
-              width={10}
-              height={strokeWidth}
-              rotation={REVERSE_ROTATION}
-              fill={fillColor}
-            />
-          </>
-        )}
-        {steps &&
-          steps?.segments?.length > 0 &&
-          steps.segments.map((step, index) => {
-            return (
-              <Step
-                {...step}
-                {...{
-                  SIZE_VIEWPORT,
-                  labelStyle,
-                  fillProgress,
-                  segmentSize: SEGMENT_SIZE,
-                  index,
-                  radius,
-                  strokeWidth,
-                }}
-              />
-            );
-          })}
-      </Svg>
-      {center && (
-        <View
-          style={[
-            styles.container,
-            {
-              justifyContent: 'center',
-              alignItems: 'center',
-            },
-          ]}
+        <SkiaPath
+          style="stroke"
+          color={emptyColor}
+          path={generateEllipsePath(
+            [cx, cy],
+            [circleSize - thickness / 2, circleSize - thickness / 2],
+            [startAngle, sweepAngle],
+            0
+          )}
+          start={0.005}
+          end={0.995}
+          {...{ strokeWidth: thickness }}
         >
-          {center}
-        </View>
+          {shadowProps && <Shadow {...shadowProps} />}
+        </SkiaPath>
+        <SkiaPath
+          style="stroke"
+          path={generateEllipsePath(
+            [cx, cy],
+            [circleSize - thickness / 2, circleSize - thickness / 2],
+            [startAngle, sweepAngle],
+            0
+          )}
+          end={animatedGaugeFillValue}
+          {...{ strokeWidth: thickness }}
+        >
+          {shadowProps && <Shadow {...shadowProps} />}
+          <SweepGradient
+            start={60}
+            end={300}
+            c={vec((size + 100) / 2, (size + 100) / 2)}
+            transform={[
+              { rotate: Math.PI / 2 },
+              { translateX: 0 },
+              { translateY: -(size + 50) },
+            ]}
+            colors={colors}
+          />
+        </SkiaPath>
+      </Canvas>
+      {steps &&
+        renderStep &&
+        steps.map((step, index) =>
+          renderStep({
+            step,
+            index,
+            radius: circleSize / 2,
+            getX: (offset: number, radius = circleSize / 2) =>
+              cx +
+              offset +
+              radius *
+                Math.sin(
+                  degrees_to_radians(
+                    startAngle + ANGLE_OFFSET + (sweepAngle * step) / 100
+                  )
+                ),
+            getY: (offset: number, radius = circleSize / 2) =>
+              cy -
+              offset +
+              radius *
+                -Math.cos(
+                  degrees_to_radians(
+                    startAngle + ANGLE_OFFSET + (sweepAngle * step) / 100
+                  )
+                ),
+            angle: startAngle + ANGLE_OFFSET + (sweepAngle * step) / 100,
+          })
+        )}
+      {renderNeedle && renderNeedle({ getNeedleStyle })}
+      {renderLabel && (
+        <View style={[styles.container, styles.centered]}>{renderLabel()}</View>
       )}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
+  centered: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   container: { position: 'absolute', zIndex: 99 },
 });

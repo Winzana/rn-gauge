@@ -1,7 +1,7 @@
 {
-  "name": "rn-gauge",
+  "name": "@winzana/rn-gauge",
   "version": "0.1.0",
-  "description": "Providing customizable gauge component.",
+  "description": "🍩 Awesome smooth and beautiful animated gauge ",
   "main": "lib/commonjs/index",
   "module": "lib/module/index",
   "types": "lib/typescript/index.d.ts",
@@ -25,7 +25,7 @@
     "test": "jest",
     "typescript": "tsc --noEmit",
     "lint": "eslint \"**/*.{js,ts,tsx}\"",
-    "prepare": "bob build",
+    "prepare": "husky install && bob build",
     "release": "release-it",
     "example": "yarn --cwd example",
     "pods": "cd example && pod-install --quiet",
@@ -45,41 +45,49 @@
   },
   "homepage": "https://github.com/Winzana/rn-gauge.git#readme",
   "publishConfig": {
-    "registry": "https://registry.npmjs.org/"
+    "registry": "https://npm.pkg.github.com"
   },
   "devDependencies": {
+    "@commitlint/cli": "^17.0.1",
+    "@commitlint/config-angular": "^17.0.0",
     "@commitlint/config-conventional": "^11.0.0",
     "@react-native-community/eslint-config": "^2.0.0",
     "@release-it/conventional-changelog": "^2.0.0",
+    "@shopify/react-native-skia": "^0.1.123",
     "@types/jest": "^26.0.0",
     "@types/react": "^16.9.19",
     "@types/react-native": "0.62.13",
-    "commitlint": "^11.0.0",
     "eslint": "^7.2.0",
     "eslint-config-prettier": "^7.0.0",
     "eslint-plugin-prettier": "^3.1.3",
-    "husky": "^6.0.0",
+    "husky": "^8.0.1",
     "jest": "^26.0.1",
+    "metro-react-native-babel-preset": "^0.64.0",
     "pod-install": "^0.1.0",
     "prettier": "^2.0.5",
-    "react": "16.13.1",
-    "react-native": "0.63.4",
+    "react": "17.0.2",
+    "react-native": "0.67.4",
     "react-native-builder-bob": "^0.18.0",
-    "react-native-svg": "^12.3.0",
-    "react-native-svg-path-gradient": "^0.4.0",
+    "react-test-renderer": "^18.1.0",
     "release-it": "^14.2.2",
+    "semantic-release": "^19.0.2",
     "typescript": "^4.1.3"
   },
+  "husky": {
+    "hooks": {
+      "commit-msg": "commitlint -E HUSKY_GIT_PARAMS",
+      "pre-commit": "lint-staged && yarn typescript:typescheck"
+    }
+  },
+  "lint-staged": {
+    "**/*.ts?(x)": [
+      "yarn typescript:lint"
+    ]
+  },
   "peerDependencies": {
+    "@shopify/react-native-skia": "*",
     "react": "*",
     "react-native": "*"
-  },
-  "jest": {
-    "preset": "react-native",
-    "modulePathIgnorePatterns": [
-      "<rootDir>/example/node_modules",
-      "<rootDir>/lib/"
-    ]
   },
   "commitlint": {
     "extends": [
@@ -148,6 +156,8 @@
     ]
   },
   "dependencies": {
+    "@feizheng/react-markdown-props": "^1.2.3",
+    "react-docgen-typescript-markdown-render": "^0.2.5",
     "tslint": "^6.1.3",
     "tslint-react": "^5.0.0"
   }
