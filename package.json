@@ -1,5 +1,5 @@
 {
-  "name": "@winzana-fr/rn-gauge",
+  "name": "@wz-mobile/rn-gauge",
   "version": "0.1.0",
   "description": "🍩 Awesome smooth and beautiful animated gauge ",
   "main": "lib/commonjs/index",
