@@ -44,9 +44,6 @@
     "url": "https://github.com/Winzana/rn-gauge.git/issues"
   },
   "homepage": "https://github.com/Winzana/rn-gauge.git#readme",
-  "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
-  },
   "devDependencies": {
     "@commitlint/cli": "^17.0.1",
     "@commitlint/config-angular": "^17.0.0",
