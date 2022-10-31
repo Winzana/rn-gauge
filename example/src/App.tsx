@@ -29,7 +29,9 @@ const Label = () => (
 );
 
 const AnimatedImage = Animated.createAnimatedComponent(Image);
+
 export default function App() {
+  //#region State Initialization
   const [value, setValue] = React.useState(0);
   const [thickness, setThickness] = React.useState(65);
   const [stepMarker, setStepMarker] = React.useState(18);
@@ -39,6 +41,7 @@ export default function App() {
   const [size, setSize] = React.useState(300);
   const [showNeedle, setNeedleVisibility] = React.useState(true);
   const [showStep, setStepVisibility] = React.useState(true);
+  //#endregion
 
   const Needle: GaugeProps['renderNeedle'] = ({ getNeedleStyle }) => (
     <AnimatedImage
