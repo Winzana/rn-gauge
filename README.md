@@ -16,13 +16,13 @@ Performant, customizable, beautiful jauge component based on skia engine 🚀
 ## Installation
 
 ```sh
-yarn add @winzana-fr/rn-gauge
+yarn add @wz-mobile/rn-gauge
 ```
 
 ## Get Started
 
 ```jsx
-import { Gauge } from '@winzana-fr/rn-gauge';
+import { Gauge } from '@wz-mobile/rn-gauge';
 
 <Gauge
   emptyColor="#C1C1C1"
