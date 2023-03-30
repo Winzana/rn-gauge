@@ -26,7 +26,11 @@ type GetAxisValue = (offset: number, radius?: number) => number;
 
 type GetNeedleStyle = (
   width: number,
-  height: number
+  height: number,
+  pivotOriginalPointY?: number,
+  pivotAnchorOffsetY?: number,
+  positionYOffset?: number,
+  positionXOffset?: number
 ) => {
   position: string;
   left: number;
@@ -38,6 +42,11 @@ type GetNeedleStyle = (
 };
 
 export interface IProps {
+  /**
+   * The external stroke width of the gauge
+   */
+  strokeColor?: string;
+
   /**
    * The external stroke width of the gauge
    */
@@ -109,6 +118,10 @@ export interface IProps {
    * Spring config for fill progress animation
    */
   springConfig?: SpringConfig;
+  /**
+   * Needle base offset
+   */
+  showGaugeCenter?: boolean;
 }
 
 const ANGLE_OFFSET = 90;
@@ -128,6 +141,8 @@ export const Gauge: React.FC<IProps> = ({
   renderLabel,
   size,
   springConfig,
+  strokeColor,
+  showGaugeCenter,
 }) => {
   const animatedGaugeFillValue = useValue(0);
 
@@ -158,16 +173,23 @@ export const Gauge: React.FC<IProps> = ({
   // Circle size without stroke
   const circleSize = size / 2 - (strokeWidth || 2);
 
-  const getNeedleStyle = (width: number, height: number) => ({
+  const getNeedleStyle = (
+    width: number,
+    height: number,
+    pivotOriginalPointY = 0,
+    pivotAnchorOffsetY = 0,
+    positionYOffset = 0,
+    positionXOffset = 0
+  ) => ({
     position: 'absolute',
-    left: cx - width / 2,
-    top: cy - height,
+    left: cx - width / 2 - positionXOffset,
+    top: cy - height - positionYOffset,
     width,
     height,
     backgroundColor: 'transparent',
     transform: transformOriginWorklet(
-      { x: cx + width / 2, y: cy },
-      { x: cx + width / 2, y: cy - height / 2 },
+      { x: cx, y: cy - pivotAnchorOffsetY },
+      { x: cx, y: cy - (height - pivotOriginalPointY) / 2 },
       [
         {
           rotateZ: animatedArrowValue.current.interpolate({
@@ -193,7 +215,7 @@ export const Gauge: React.FC<IProps> = ({
       >
         <SkiaPath
           style="stroke"
-          color="cyan"
+          color={strokeColor ? strokeColor : 'cyan'}
           path={generateEllipsePath(
             [cx, cy],
             [circleSize - thickness / 2, circleSize - thickness / 2],
@@ -211,8 +233,8 @@ export const Gauge: React.FC<IProps> = ({
             [startAngle, sweepAngle],
             0
           )}
-          start={0.005}
-          end={0.995}
+          start={0.001}
+          end={1}
           {...{ strokeWidth: thickness }}
         >
           {shadowProps && <Shadow {...shadowProps} />}
@@ -274,6 +296,20 @@ export const Gauge: React.FC<IProps> = ({
       {renderLabel && (
         <View style={[styles.container, styles.centered]}>{renderLabel()}</View>
       )}
+      {showGaugeCenter && (
+        <View style={[{ top: cy - 25, left: cx }, styles.verticalAxis]} />
+      )}
+      {showGaugeCenter && (
+        <View
+          style={[
+            {
+              top: cy,
+              left: cx - 25,
+            },
+            styles.horizontalAxis,
+          ]}
+        />
+      )}
     </View>
   );
 };
@@ -282,6 +318,18 @@ const styles = StyleSheet.create({
   centered: {
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  horizontalAxis: {
+    height: 1,
+    width: 50,
+    position: 'absolute',
+    backgroundColor: 'red',
+  },
+  verticalAxis: {
+    height: 50,
+    width: 1,
+    position: 'absolute',
+    backgroundColor: 'red',
   },
   container: { position: 'absolute', zIndex: 99 },
 });

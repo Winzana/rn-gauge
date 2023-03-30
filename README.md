@@ -8,10 +8,7 @@ Performant, customizable, beautiful jauge component based on skia engine 🚀
 
 ## Preview
 
-<div style="display:flex;flex-direction:row;width:100%; justify-content:space-around;">
-  <img style="width:350px" src="./ios-gauge.gif" />
-  <img style="width:400px !important" src="./android-gauge.gif" />
-</div>
+<img style="width:350px" src="./simple-gauge.png" />
 
 ## Installation
 
@@ -43,6 +40,7 @@ import { Gauge } from '@wz-mobile/rn-gauge';
 - Built on top of Skia
 - Written in TypeScript
 - Smooth Animated effect
+- Use your own needle component
 
 ## Props
 
@@ -62,10 +60,37 @@ import { Gauge } from '@wz-mobile/rn-gauge';
 | canvasStyle               | StyleProp&lt;ViewStyle>                                                                                                             |               | Custom Canvas style                                            |
 | shadowProps               | AnimatedProps&lt;ShadowProps>                                                                                                       |               | Shadow props if wanted, could provide nice shadow effects      |
 | springConfig              | SpringConfig                                                                                                                        |               | Spring config for fill progress animation                      |
+| showGaugeCenter           | boolean                                                                                                                             |               | Show gauge center                                              |
+
+## Use your own needle component
+
+This sample shows you how to use a custom needle component, it's recommended to set showGaugeCenter to true to
+fine tune the parameters passed to `getNeedleStyle` function.
+
+```jsx
+const SimpleNeedle: GaugeProps['renderNeedle'] = ({ getNeedleStyle }) => (
+  <>
+    <Animated.View style={[getNeedleStyle(80, 80, 14.5, 0, -7.6)]}>
+      <AnimatedImage
+        style={{ width: 80, height: 80 }}
+        resizeMode="contain"
+        source={SimpleNeedleImage}
+      />
+    </Animated.View>
+  </>
+);
+```
 
 ## What is sweepAngle ?
 
 ![alt text](gaugeAngles.png 'Title')
+
+## Highly customizable
+
+<div style="display:flex;flex-direction:row;width:100%; justify-content:space-around;">
+  <img style="width:350px" src="./ios-gauge.gif" />
+  <img style="width:400px !important" src="./android-gauge.gif" />
+</div>
 
 ## To Do
 

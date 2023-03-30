@@ -14,6 +14,8 @@ import { Gauge, IProps as GaugeProps } from '../../src/index';
 
 // @ts-ignore
 import NeedleImage from './love-arrow.png';
+// @ts-ignore
+import SimpleNeedleImage from './needle.png';
 
 const Label = () => (
   <Text
@@ -44,10 +46,24 @@ export default function App() {
   //#endregion
 
   const Needle: GaugeProps['renderNeedle'] = ({ getNeedleStyle }) => (
-    <AnimatedImage
-      style={[getNeedleStyle(300 / 3, 300 / 3)]}
-      source={NeedleImage}
-    />
+    <>
+      <AnimatedImage
+        style={[getNeedleStyle(300 / 3, 300 / 3)]}
+        source={NeedleImage}
+      />
+    </>
+  );
+
+  const SimpleNeedle: GaugeProps['renderNeedle'] = ({ getNeedleStyle }) => (
+    <>
+      <Animated.View style={[getNeedleStyle(80, 80, 14.5, 0, -7.6)]}>
+        <AnimatedImage
+          style={{ width: 80, height: 80 }}
+          resizeMode="contain"
+          source={SimpleNeedleImage}
+        />
+      </Animated.View>
+    </>
   );
 
   const Step: GaugeProps['renderStep'] = ({
@@ -61,14 +77,14 @@ export default function App() {
       <View
         style={[
           {
-            width: 4,
+            width: step % 25 === 0 ? 4 : 1,
             marginLeft: -2,
             height: 20,
             borderRadius: 2,
             position: 'absolute',
             left: getX(0, radius + stepMarker),
             top: getY(10, radius + stepMarker),
-            backgroundColor: 'cyan',
+            backgroundColor: 'lightgray',
             transform: [{ rotateZ: `${angle}deg` }],
           },
         ]}
@@ -83,7 +99,9 @@ export default function App() {
             transform: [{ rotateZ: `${angle}deg` }],
           },
         ]}
-      >{`${step * 2}`}</Text>
+      >
+        {step % 10 === 0 ? `${step}` : ''}
+      </Text>
     </>
   );
 
@@ -114,6 +132,30 @@ export default function App() {
             strokeWidth={strokeWidth}
             fillProgress={value * 100}
             renderNeedle={showNeedle ? Needle : undefined}
+            renderLabel={Label}
+            size={size}
+            thickness={thickness}
+          />
+
+          <Gauge
+            emptyColor="#FAFAFA"
+            springConfig={{
+              velocity: 1.5,
+              mass: 25,
+              stiffness: 800,
+              damping: 180,
+            }}
+            colors={['#14E88A']}
+            strokeColor="#14E88A"
+            steps={[
+              0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80,
+              85, 90, 95, 100,
+            ]}
+            renderStep={showStep ? Step : undefined}
+            sweepAngle={sweepAngle}
+            strokeWidth={strokeWidth}
+            fillProgress={value * 100}
+            renderNeedle={showNeedle ? SimpleNeedle : undefined}
             renderLabel={Label}
             size={size}
             thickness={thickness}

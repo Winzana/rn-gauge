@@ -8,10 +8,16 @@ export const transformOriginWorklet = (
   'worklet';
   const result = [
     { translateX: anchorPoint.x - originalCenterPoint.x },
-    { translateY: anchorPoint.y - originalCenterPoint.y },
+    {
+      translateY: anchorPoint.y - originalCenterPoint.y,
+    },
     ...transforms,
-    { translateX: -(anchorPoint.x - originalCenterPoint.x) },
-    { translateY: -(anchorPoint.y - originalCenterPoint.y) },
+    {
+      translateX: -(anchorPoint.x - originalCenterPoint.x),
+    },
+    {
+      translateY: -(anchorPoint.y - originalCenterPoint.y),
+    },
   ];
   return result;
 };
