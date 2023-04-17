@@ -1,8 +1,10 @@
 [![rn-gauge](https://github.com/Winzana/rn-gauge/actions/workflows/ci.yml/badge.svg)](https://github.com/Winzana/rn-gauge/actions/workflows/ci.yml) ![Known Vulnerabilities](https://snyk.io/test/github/Winzana/rn-gauge/badge.svg) [![CodeQL](https://github.com/starnowski/posmulten/workflows/CodeQL/badge.svg)](https://github.com/Winzana/rn-gauge/actions?query=workflow%3ACodeQL) [![semantic-release: angular](https://img.shields.io/badge/semantic--release-angular-e10079?logo=semantic-release)](https://github.com/semantic-release/semantic-release)
 
-# 🍩 React Native Beautiful Gauge ✨
+# 🍩 React Native Gauge ✨
 
 Performant, customizable, beautiful jauge component based on skia engine 🚀
+</br>
+This component can be used to achieve differents UI components like react-native progress, react-native speedometer, or gauge.
 
 ![alt text](logo.jpg)
 
